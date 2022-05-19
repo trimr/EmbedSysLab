@@ -24,7 +24,7 @@ byte Ohm[8] = {
 float resistanceValue = 0; // placeholder for unknown resistance
 int timeoutCounter = 0;
 
-// custom func. to calculate the value of the resistance. also check if the value exceeds the limiation.
+// custom func. to calculate the value of the resistance.
 float getResistanceValue(float analogValue)
 {
   float V_out = analogValue / 1024 * V_in;
@@ -36,27 +36,31 @@ float getResistanceValue(float analogValue)
 void display(int timeoutCounter, float rValue)
 {
   lcd.clear();
+  // If there's a resistance
   if (timeoutCounter == 0)
   {
     lcd.print("IDENTIFICATING..");
     lcd.setCursor(0, 1);
+    // Situation 1, resistance too small compare to R1
     if (rValue < R1 * 0.1)
     {
       lcd.print("VALUE TOO SMALL!");
     }
+    // Situation 2, resistance too big compare to R1
     else if (rValue > R1 * 10)
     {
       lcd.print("VALUE TOO BIG!");
     }
+    // Situation 3, resistance can be identificated within R1's valid range
     else
     {
       lcd.print("VALUE: ");
       lcd.print(resistanceValue, 2);
-      // lcd.print(" Ohm");
       lcd.write(byte(0));
     }
   }
-  else
+  // If there's no resistance and not timed out, start a countdown(set by MAXTIME)
+  else if (timeoutCounter < MAXTIME / DELAYTIME)
   {
     lcd.print("NO RESISTANCE!");
     lcd.setCursor(0, 1);
@@ -64,13 +68,21 @@ void display(int timeoutCounter, float rValue)
     lcd.print((MAXTIME - timeoutCounter * DELAYTIME) / 1000);
     lcd.print("s!");
   }
+  // If timed out
+  else
+  {
+    lcd.print("TIMED OUT, ");
+    lcd.setCursor(0, 1);
+    lcd.print("PROCESS ENDED.");
+    Serial.println("TIME OUT!!!");
+  }
 }
 
 // setup function
 void setup()
 {
   lcd.begin(16, 2);
-  Serial.begin(9600);
+  // Serial.begin(9600);
   lcd.createChar(0, Ohm);
 }
 
@@ -79,32 +91,21 @@ void loop()
 {
   int analogValue = analogRead(monitorPort);
 
-  if (timeoutCounter < MAXTIME / DELAYTIME) // if not overtime
+  if (timeoutCounter < MAXTIME / DELAYTIME) // if not timed out, process can keep going.
   {
-    if (analogValue >= 1023) // if no resistance is set
+    if (analogValue >= 1023) // if no resistance is set, add timeoutCounter by 1
     {
       timeoutCounter++;
     }
-    else
+    else // if resistance is set, reset timeoutCounter to 0 and calculate the value
     {
       timeoutCounter = 0;
       resistanceValue = getResistanceValue(analogValue);
-      Serial.print(resistanceValue);
     }
-    Serial.print(", Overtime counter: ");
-    Serial.print(timeoutCounter);
-    Serial.print("\n");
+  }
 
-    display(timeoutCounter, resistanceValue);
-  }
-  else
-  {
-    lcd.clear();
-    lcd.print("TIMED OUT, ");
-    lcd.setCursor(0, 1);
-    lcd.print("PROCESS ENDED.");
-    Serial.println("TIME OUT!!!");
-  }
+  // display info under different situations
+  display(timeoutCounter, resistanceValue);
 
   // loop delay
   delay(DELAYTIME);
