@@ -8,8 +8,9 @@ const int monitorPort = A5;            // analog port
 const float V_in = 5.0;                // voltage at 5V pin of arduino
 const int MAXTIME = 10000;             // timeout limitation(millisecond)
 const int DELAYTIME = 1000;            // delay time(millisecond)
-const float R1 = 1000;                 // known resistance
+const int R1 = 1000;                 // known resistance
 
+// Custom pixel-level ohm sign
 byte Ohm[8] = {
     0b00000,
     0b00000,
