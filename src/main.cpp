@@ -34,7 +34,7 @@ float getResistanceValue(float analogValue)
 }
 
 // custom func. to display info on the lcd display.
-void display(int timeoutCounter, float rValue)
+void display(int timeoutCounter, int analogValue)
 {
   lcd.clear();
   // If there's a resistance
@@ -43,19 +43,23 @@ void display(int timeoutCounter, float rValue)
     lcd.print("IDENTIFICATING..");
     lcd.setCursor(0, 1);
     // Situation 1, resistance too small compare to R1
-    if (rValue < R1 * 0.1)
+    if (analogValue >= 1020)
     {
       lcd.print("VALUE TOO SMALL!");
     }
     // Situation 2, resistance too big compare to R1
-    else if (rValue > R1 * 10)
+    else if (analogValue <= 3)
     {
       lcd.print("VALUE TOO BIG!");
     }
     // Situation 3, resistance can be identificated within R1's valid range
     else
     {
+      Serial.print(", Rx value: ");
+      Serial.print(resistanceValue);
+
       lcd.print("VALUE: ");
+      resistanceValue = getResistanceValue(analogValue);
       lcd.print(resistanceValue, 2);
       lcd.write(byte(0));
     }
@@ -83,7 +87,7 @@ void display(int timeoutCounter, float rValue)
 void setup()
 {
   lcd.begin(16, 2);
-  // Serial.begin(9600);
+  Serial.begin(9600);
   lcd.createChar(0, Ohm);
 }
 
@@ -101,12 +105,15 @@ void loop()
     else // if resistance is set, reset timeoutCounter to 0 and calculate the value
     {
       timeoutCounter = 0;
-      resistanceValue = getResistanceValue(analogValue);
     }
   }
 
+  // Serial debug
+  Serial.print("\nAnalog value: ");
+  Serial.print(analogValue);
+
   // display info under different situations
-  display(timeoutCounter, resistanceValue);
+  display(timeoutCounter, analogValue);
 
   // loop delay
   delay(DELAYTIME);
